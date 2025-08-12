@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# GitHub App configuration
+APP_ID="1743871"
+INSTALLATION_ID="79714824" 
+PRIVATE_KEY_FILE="deployment-protection-rules-test.2025-08-07.private-key.pem"
+
+# Generate JWT token
+JWT_TOKEN=$(python3 -c "
+import jwt
+from datetime import datetime, timedelta
+
+with open('$PRIVATE_KEY_FILE', 'r') as key_file:
+    private_key = key_file.read()
+
+now = datetime.utcnow()
+payload = {
+    'iat': now,
+    'exp': now + timedelta(minutes=10),
+    'iss': '$APP_ID'
+}
+
+jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
+print(jwt_token)
+")
+
+echo "🔑 Generated JWT token: ${JWT_TOKEN:0:50}..."
+
+# Exchange JWT for installation token - CORRECTED VERSION
+echo "🔄 Getting installation token..."
+
+RESPONSE=$(curl -s -X POST \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  -H "Content-Type: application/json" \
+  -d '{"permissions": {"deployments": "write", "metadata": "read"}}' \
+  "https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens")
+
+# Extract token from response
+INSTALLATION_TOKEN=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if 'token' in data:
+        print(data['token'])
+    else:
+        print('ERROR')
+        print(json.dumps(data, indent=2), file=sys.stderr)
+except Exception as e:
+    print('ERROR')
+    print(f'Parse error: {e}', file=sys.stderr)
+")
+
+if [ "$INSTALLATION_TOKEN" = "ERROR" ]; then
+    echo " Failed to get installation token"
+    echo "Response: $RESPONSE"
+    exit 1
+fi
+
+echo " Installation token obtained: ${INSTALLATION_TOKEN:0:50}..."
+echo ""
+echo "Token is ready to use:"
+echo "export GITHUB_TOKEN='$INSTALLATION_TOKEN'"
