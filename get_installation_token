@@ -24,10 +24,10 @@ jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
 print(jwt_token)
 ")
 
-echo "🔑 Generated JWT token: ${JWT_TOKEN:0:50}..."
+echo " Generated JWT token: ${JWT_TOKEN:0:50}..."
 
 # Exchange JWT for installation token - CORRECTED VERSION
-echo "🔄 Getting installation token..."
+echo "Getting installation token..."
 
 RESPONSE=$(curl -s -X POST \
   -H "Authorization: Bearer $JWT_TOKEN" \
