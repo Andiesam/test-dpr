@@ -34,7 +34,7 @@ def save_webhook_payload(event_type, data):
     try:
         with open(filepath, 'w') as f:
             json.dump(payload_with_meta, f, indent=2)
-        print(f"💾 Saved payload: {filepath}")
+        print(f"Saved payload: {filepath}")
         return filepath
     except Exception as e:
         print(f" Failed to save payload: {e}")
@@ -182,7 +182,7 @@ def reject_deployment(deployment_key):
     if response.status_code == 204:
         del pending_deployments[deployment_key]
         print(f"\n REJECTED: {deployment_key}")
-        print(f"📋 Remaining: {len(pending_deployments)} pending")
+        print(f"Remaining: {len(pending_deployments)} pending")
         return jsonify({'status': 'rejected'})
     else:
         print(f" Rejection failed: {response.status_code} - {response.text}")
